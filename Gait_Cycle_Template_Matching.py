@@ -1,10 +1,15 @@
 """
-Description: 
+Description: This class contains code for generate a template which can be used to mark all inflection 
+    points on a large underfoot pressure dataset. These inflection points can then be used to parse
+    underfoot pressure data into complete gait cycles.
 
 Written by Grange Simpson
-Version: 2024.12.13
+Version: 2024.12.15
 
-Usage: Run the file.
+Usage: Load the dictionary in the .pkl file output from Manual_Inflection_Point_Marking_GUI.py, or another 
+    dictionary which contains value: dataset name, key: dataset inflection points separately. 
+
+    Important: Only function which needs to be interacted with in this class is find_template_extract_inds().
 Recommendations: 
 """
 
