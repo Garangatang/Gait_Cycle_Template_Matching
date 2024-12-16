@@ -1,3 +1,23 @@
+"""
+Description: This GUI can be used to manually mark a subsection of inflection points within underfoot pressure data.
+    This subsection of data can be used to construct a template within Gait_Cycle_Template_Matching.py which can 
+    find all inflection points within the larger dataset.
+
+Written by Grange Simpson
+Version: 2024.12.15
+
+Usage: When you run the file a file selector will be opened. A Python dictionary containing key: dataset name, and
+    value: dataset compressed into a pandas .pkl file is the only acceptable file type. Select the appropriate .pkl
+    file and it should be loaded into the GUI. 
+
+    Important: with this current file version, self.datalength will need to be adjusted according to the sampling
+    rate of the input data so an appropriate subsection of data can have its inflection points marked.
+
+    After inflection points have been marked, saved_inflection_point_dictionary.pkl which contains a dictionary will 
+    be output key: dataset name, value: marked inflection points for that dataset input into Gait_Cycle_Template_Matching.py
+Recommendations: 
+"""
+
 import sys
 import numpy as np
 from PyQt5.QtWidgets import QApplication, QMainWindow, QVBoxLayout, QHBoxLayout, QWidget, QPushButton, QMessageBox, QFileDialog
