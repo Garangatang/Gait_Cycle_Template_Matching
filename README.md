@@ -15,3 +15,6 @@ Gait_Cycle_Template_Matching: Constructs a template from the subsection of manua
 For any usage cite this paper: (To be linked after publishing)
 
 gc_template_matching.yml contains the anaconda environment used to run both files. Load this environment into anaconda and use it through your favorite coding environment. For usage details, read the description at the top of each Python file. 
+
+## Updates
+A fully automated v2 version will be linked here after testing has been completed. The v2 version will require no manual marking of data.
