@@ -205,7 +205,7 @@ class Template_Matching:
 
         for key in inputPressDict.keys():
             # Upsampling data to 1980 Hz. A window size of 93 has been tested and approved for smoothing
-            x, pressData, inflPoints = self.upsample_with_inflections(np.linspace(len(inputPressDict[key])), inputPressDict[key], inputIndDict[key], upSampleFact)
+            x, pressData, inflPoints = self.upsample_with_inflections(np.arange(len(inputPressDict[key])), inputPressDict[key], inputIndDict[key], upSampleFact)
             pressData = self.savitzky_golay(pressData, 93, 3)
 
             self.extract_template(inflPoints, pressData)
