@@ -62,7 +62,7 @@ class Template_Matching:
     param: upSampleFactor: The length factor that the data needs to be upsampled by. Example: If the data is 
         originally sampled at 66 Hz, and needs to be upsampled to 1980 Hz, then the upsampleFactor is 30.
     """
-    def upsample_with_inflections(x, y, inflectionIndices, upsampleFactor):
+    def upsample_with_inflections(self, x, y, inflectionIndices, upsampleFactor):
         # Create a boolean mask for inflection points
         inflectionMask = np.zeros(len(x), dtype=bool)
         inflectionMask[inflectionIndices] = True
@@ -94,7 +94,7 @@ class Template_Matching:
     -------
     ys : ndarray, shape (N), the smoothed signal (or it's n-th derivative).
     """
-    def savitzky_golay(y, window_size, order, deriv=0, rate=1):
+    def savitzky_golay(self, y, window_size, order, deriv=0, rate=1):
 
         try:
             window_size = np.abs(int(window_size))
@@ -206,7 +206,7 @@ class Template_Matching:
         for key in inputPressDict.keys():
             # Upsampling data to 1980 Hz. A window size of 93 has been tested and approved for smoothing
             x, pressData, inflPoints = self.upsample_with_inflections(np.linspace(len(inputPressDict[key])), inputPressDict[key], inputIndDict[key], upSampleFact)
-            pressData = self.savitzky_golay(pressData, 93)
+            pressData = self.savitzky_golay(pressData, 93, 3)
 
             self.extract_template(inflPoints, pressData)
             self.find_infl_using_template(pressData, signalIncreaseVal)
