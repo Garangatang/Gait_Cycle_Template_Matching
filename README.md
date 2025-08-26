@@ -18,3 +18,7 @@ gc_template_matching.yml contains the anaconda environment used to run both file
 
 ## Updates
 A fully automated v2 version will be linked here after testing has been completed. The v2 version will require no manual marking of data.
+
+## Collaborators
+[![Github Badge](https://img.shields.io/badge/-Grange_Simpson-3A3B3C?style=for-the-badge&logo=github&logoColor=white)](https://github.com/Garangatang)
+[![Github Badge](https://img.shields.io/badge/-NERVES_Lab-3A3B3C?style=for-the-badge&logo=github&logoColor=white)](https://github.com/NERVESLabUtah)
