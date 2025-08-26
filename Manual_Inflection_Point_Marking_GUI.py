@@ -7,7 +7,7 @@ Written by Grange Simpson
 Version: 2024.12.15
 
 Usage: When you run the file a file selector will be opened. A Python dictionary containing key: dataset name, and
-    value: dataset compressed into a pandas .pkl file is the only acceptable file type. Select the appropriate .pkl
+    value: numpy array dataset compressed into a pandas .pkl file is the only acceptable file type. Select the appropriate .pkl
     file and it should be loaded into the GUI. 
 
     Important: with this current file version, self.datalength will need to be adjusted according to the sampling
