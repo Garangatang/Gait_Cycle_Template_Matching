@@ -17,7 +17,7 @@ For any usage cite the paper on ieeexplore [here](https://ieeexplore.ieee.org/do
 gc_template_matching.yml contains the anaconda environment used to run both files. Load this environment into anaconda and use it through your favorite coding environment. For usage details, read the description at the top of each Python file. 
 
 ## Updates
-A fully automated v2 version will be linked here after testing has been completed. The v2 version will require no manual marking of data.
+A fully automated v2 version is located [here](https://github.com/Garangatang/Automated_Gait_Cycle_Template_Matching/tree/main). Testing still needs to be completed before a full release. The v2 version will requires no manual marking of data.
 
 ## Collaborators
 [![Github Badge](https://img.shields.io/badge/-Grange_Simpson-3A3B3C?style=for-the-badge&logo=github&logoColor=white)](https://github.com/Garangatang)
