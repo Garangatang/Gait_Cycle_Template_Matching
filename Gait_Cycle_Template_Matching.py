@@ -46,6 +46,7 @@ class Template_Matching:
         self.overlapValBuffer = np.array([])
 
         self.keptOverlapIndices = np.array([])
+        #self.overlapIndices = np.array([])
 
         self.upperInflPointRange = 100
         self.lowerInflPointRange = 100
@@ -166,7 +167,7 @@ class Template_Matching:
                     if (overlapVal > 0):
                         self.overlapValBuffer = np.append(self.overlapValBuffer, overlapVal)    
                         self.overlapIndicesBuffer = np.append(self.overlapIndicesBuffer, i - len(self.template))
-                        self.overlapIndices = np.append(self.overlapIndices, i - len(self.template))
+                        #self.overlapIndices =  np.append(self.overlapIndices, i - len(self.template))
 
                     # Extracting values from the buffer and clearing it if moving on to the next inflection point
                     else:
@@ -193,11 +194,12 @@ class Template_Matching:
 
     param: inputPressDict: 
     param: inputIndDict:
-    param: signalIncreaseVal: 
     param: upSampleFact: The length factor that the data needs to be upsampled by. Example: If the data is 
         originally sampled at 66 Hz, and needs to be upsampled to 1980 Hz, then the upsampleFactor is 30.
+    param: resampling needed: If you already resample to ~1926 Hz, then not needed
+    param: signalIncreaseVal: 
     """
-    def find_template_extract_inds(self, inputPressDict, inputIndDict, upSampleFact, signalIncreaseVal = 20):
+    def find_template_extract_inds(self, inputPressDict, inputIndDict, upSampleFact, resamp = False, signalIncreaseVal = 20):
         if (inputPressDict.keys() != inputIndDict.keys()):
             print("---------------------------------------------------")
             print("Keys between the two input dictionaries must match.")
@@ -205,13 +207,26 @@ class Template_Matching:
 
         for key in inputPressDict.keys():
             # Upsampling data to 1980 Hz. A window size of 93 has been tested and approved for smoothing
-            x, pressData, inflPoints = self.upsample_with_inflections(np.arange(len(inputPressDict[key])), inputPressDict[key], inputIndDict[key], upSampleFact)
-            pressData = self.savitzky_golay(pressData, 93, 3)
+            if len(inputIndDict[key]) == 0:
+                print("No inflection points to build template")
+                print(f"Skipping: {key}")
+                continue
+            if resamp:
+                x, pressData, inflPoints = self.upsample_with_inflections(np.arange(len(inputPressDict[key])), inputPressDict[key], inputIndDict[key], upSampleFact)
+                pressData = self.savitzky_golay(pressData, 93, 3)
 
-            self.extract_template(inflPoints, pressData)
-            self.find_infl_using_template(pressData, signalIncreaseVal)
-            pressDataInflInds = np.array([round(i) for i in self.keptOverlapIndices]) + len(self.template)
-            self.inflPointDict[key] = pressDataInflInds + int(0.5*len(self.template))
+                self.extract_template(inflPoints, pressData)
+                self.find_infl_using_template(pressData, signalIncreaseVal)
+                pressDataInflInds = np.array([round(i) for i in self.keptOverlapIndices]) + len(self.template)
+                self.inflPointDict[key] = pressDataInflInds + int(0.5*len(self.template))
+
+            else:
+                pressData = inputPressDict[key]
+                inflPoints = inputIndDict[key]
+                self.extract_template(inflPoints, pressData)
+                self.find_infl_using_template(pressData, signalIncreaseVal)
+                pressDataInflInds = np.array([round(i) for i in self.keptOverlapIndices]) + len(self.template)
+                self.inflPointDict[key] = pressDataInflInds + int(0.5*len(self.template))
+
         
         return self.inflPointDict
-
