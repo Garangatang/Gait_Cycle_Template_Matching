@@ -177,7 +177,7 @@ class SignalGraphWindow(QMainWindow):
             if self.hs_file_path != None:
                 inflPointKeys = list(self.savedHSInflPointDict.keys())
                 self.keyIndex = len(inflPointKeys) - 1
-
+                    
                 # Set up the 
                 self.x = np.linspace(0, len(self.normPressDict[self.dataKeys[self.keyIndex]].iloc[0:self.dataLength]), 
                                     len(self.normPressDict[self.dataKeys[self.keyIndex]].iloc[0:self.dataLength]))
@@ -217,8 +217,14 @@ class SignalGraphWindow(QMainWindow):
                 pen = pg.mkPen(color='m', width=3)
                 self.plot = self.graph_widget.plot(self.x, self.y, pen = pen)
 
-        elif (self.normPressDict != None and self.keyIndex < len(self.dataKeys) - 1):
+        elif (self.normPressDict != None and self.keyIndex < len(self.dataKeys)):
             self.keyIndex += 1
+
+            #print(self.keyIndex)
+            #print(len(self.dataKeys))
+            if (self.keyIndex > len(self.dataKeys) - 1):
+                self.keyIndex = len(self.dataKeys) - 1
+
             self.x = np.linspace(0, len(self.normPressDict[self.dataKeys[self.keyIndex]].iloc[0:self.dataLength]), 
                                  len(self.normPressDict[self.dataKeys[self.keyIndex]].iloc[0:self.dataLength]))
             self.y = self.normPressDict[self.dataKeys[self.keyIndex]][self.normPressDict[self.dataKeys[self.keyIndex]].columns[0]].iloc[0:self.dataLength].to_numpy()
@@ -253,12 +259,12 @@ class SignalGraphWindow(QMainWindow):
 
     # Update the graph to previous data
     def update_graph_data_backward(self):
-        
-        if (self.keyIndex == None):
-            self.keyIndex = 0
-            
-        if (self.normPressDict != None and self.keyIndex != 0):
+        if (self.normPressDict != None):
             self.keyIndex -= 1
+            
+            if (self.keyIndex < 0):
+                self.keyIndex = 0
+                
             #print(self.dataKeys[self.keyIndex])
             #print(len(self.normPressDict[self.dataKeys[self.keyIndex]]))
             self.x = np.linspace(0, len(self.normPressDict[self.dataKeys[self.keyIndex]].iloc[0:self.dataLength]), len(self.normPressDict[self.dataKeys[self.keyIndex]].iloc[0:self.dataLength]))
@@ -291,6 +297,7 @@ class SignalGraphWindow(QMainWindow):
             
         currentKey = list(self.dataKeys)[self.keyIndex]
         self.setWindowTitle("Manual Selection of Inflection Points " + currentKey + " " + str(self.keyIndex + 1) + "/" + str(len(self.dataKeys)))
+        
         
     # Move to the next dataset to mark.    
     def change_data_to_mark_forward(self):
