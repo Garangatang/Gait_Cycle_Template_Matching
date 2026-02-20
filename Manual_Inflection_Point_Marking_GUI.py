@@ -4,7 +4,7 @@ Description: This GUI can be used to manually mark a subsection of inflection po
     find all inflection points within the larger dataset.
 
 Written by Grange Simpson
-Version: 2025.09.09
+Version: 2026.02.20
 
 Usage: When you run the file a file selector will be opened. A Python dictionary containing key: dataset name, and
     value: numpy array dataset compressed into a pandas .pkl file is the only acceptable file type. Select the appropriate .pkl
@@ -19,8 +19,14 @@ Recommendations:
 """
 import sys
 import numpy as np
-from PyQt5.QtWidgets import QApplication, QMainWindow, QVBoxLayout, QHBoxLayout, QWidget, QPushButton, QMessageBox, QFileDialog
+# PyQt5 will function for iOS
+from PyQt5.QtWidgets import QApplication, QMainWindow, QVBoxLayout, QHBoxLayout, QWidget, QPushButton, QMessageBox, QFileDialog, QLabel
 from PyQt5.QtGui import QFont
+from PyQt5.QtCore import QTimer, QTime, Qt
+#PySide6 will function for windows OS
+#from PySide6.QtWidgets import QApplication, QMainWindow, QVBoxLayout, QHBoxLayout, QWidget, QPushButton, QMessageBox, QFileDialog, QLabel
+#from PySide6.QtGui import QFont
+#from PySide6.QtCore import QTimer, QTime, Qt
 import pyqtgraph as pg
 import os
 import pandas as pd
@@ -79,8 +85,12 @@ class SignalGraphWindow(QMainWindow):
             self.TIP_file_path = None
             self.hs_file_path = None
             self.to_file_path = None
-            self.hs_file_name = "GT_GUI_Parsing/hs_manually_parsed_data.pkl"
-            self.to_file_name = "GT_GUI_Parsing/to_manually_parsed_data.pkl"
+            self.marking_time_path = None
+            self.counter = None
+            self.sub_file = ""
+            self.hs_file_name = f"{self.sub_file}/hs_manually_parsed_data.pkl"
+            self.to_file_name = f"{self.sub_file}/to_manually_parsed_data.pkl"
+            self.marking_time_file_name = f"{self.sub_file}/marking_time.npy"
             self.check_files_exist()
             self.open_file_dialogue()
             self.load_pkl_file_data()
@@ -120,11 +130,79 @@ class SignalGraphWindow(QMainWindow):
         self.update_graph_forward_button.setFont(self.font)
         self.update_graph_forward_button.clicked.connect(self.change_data_to_mark_forward)
         button_layout.addWidget(self.update_graph_forward_button)  
+
+        """Sets up the layout and widgets."""
+        #layout = QVBoxLayout()
+
+        # 1. Label to display time
+        self.time_label = QLabel("00:00:00")
+        self.time_label.setAlignment(Qt.AlignCenter)
+        self.time_label.setStyleSheet("font-size: 24pt;")
+        button_layout.addWidget(self.time_label)
+
+        # 2. Start Button
+        self.start_button = QPushButton("Start Timer")
+        self.start_button.clicked.connect(self.start_timer)
+        button_layout.addWidget(self.start_button)
+
+        # 3. Stop Button
+        self.stop_button = QPushButton("Stop Timer")
+        self.stop_button.clicked.connect(self.stop_timer)
+        self.stop_button.setEnabled(False)  # Disabled until timer is started
+        button_layout.addWidget(self.stop_button)
+
+               # Initialize the UI and Timer
+        #self._init_ui()
+        
+        self._init_timer()
+        print(self.counter)
+        self.time_display = QTime(0, 0, 0).addSecs(self.counter).toString("hh:mm:ss")
+        self.time_label.setText(self.time_display)
+
+    def _init_timer(self):
+        """Initializes the QTimer object and counter."""
+        # QTimer setup
+        self.timer = QTimer(self)
+        self.timer.timeout.connect(self.update_time)
+        # Set the timeout interval (e.g., 1000 milliseconds = 1 second)
+        self.timer_interval_ms = 1000
+
+        # Internal counter to track elapsed time (in seconds)
+        if self.counter == None:
+            self.counter = 0
+
+    def start_timer(self):
+        """Starts the QTimer."""
+        if not self.timer.isActive():
+            # Start the timer with the set interval
+            self.timer.start(self.timer_interval_ms)
+            # Update button states
+            self.start_button.setEnabled(False)
+            self.stop_button.setEnabled(True)
+
+    """Stops the QTimer."""
+    def stop_timer(self):
+        
+        if self.timer.isActive():
+            self.timer.stop()
+            # Update button states
+            self.start_button.setEnabled(True)
+            self.stop_button.setEnabled(False)
+
+    """Increments the counter and updates the display."""
+    def update_time(self):
+        self.counter += 1
+        
+        # Convert total seconds to QTime format (HH:MM:SS) for display
+        # QTime.fromMSecsSinceStartOfDay is convenient for this
+        self.time_display = QTime(0, 0, 0).addSecs(self.counter).toString("hh:mm:ss")
+        self.time_label.setText(self.time_display)
         
     def check_files_exist(self):
-        TIP_file_path = Path("GT_GUI_Parsing/Upsamp_UP_Dict.pkl")
+        TIP_file_path = Path(f"{self.sub_file}/Upsamp_UP_Dict.pkl")
         hs_infl_file_path = Path(f"{self.hs_file_name}")
         to_infl_file_path = Path(f"{self.to_file_name}")
+        marking_time_file_path = Path(f"{self.marking_time_file_name}")
 
         if TIP_file_path.is_file():
             print(f"{TIP_file_path} exists in the current folder")
@@ -138,6 +216,10 @@ class SignalGraphWindow(QMainWindow):
             print(f"{to_infl_file_path} exists in the current folder")
             self.to_file_path = to_infl_file_path
 
+        if marking_time_file_path.is_file():
+            print(f"{marking_time_file_path} exists in the current folder")
+            self.marking_time_path = marking_time_file_path
+
     def open_file_dialogue(self):
         # Skip dialogue if data already found
         if self.TIP_file_path != None:
@@ -148,6 +230,7 @@ class SignalGraphWindow(QMainWindow):
         file_name, _ = QFileDialog.getOpenFileName(self, "Select Data File", "", options=options)
         if file_name:
             self.TIP_file_path = file_name
+            self.sub_file = file_name
 
     # Load data stored in pkl files for manual inflection point marking
     def load_pkl_file_data(self):
@@ -169,7 +252,11 @@ class SignalGraphWindow(QMainWindow):
             with open(self.to_file_path, 'rb') as file:
                 # Load the dictionary from the file
                 self.savedTOInflPointDict = pkl.load(file)
-        
+
+        if self.marking_time_path != None:
+            #with open(self.marking_time_path, 'rb') as file:
+                # Load the time from the file
+            self.counter = np.load(self.marking_time_path)[0]
 
     # Update the graph to new data
     def update_graph_data_forward(self):
@@ -177,7 +264,7 @@ class SignalGraphWindow(QMainWindow):
             if self.hs_file_path != None:
                 inflPointKeys = list(self.savedHSInflPointDict.keys())
                 self.keyIndex = len(inflPointKeys) - 1
-                    
+
                 # Set up the 
                 self.x = np.linspace(0, len(self.normPressDict[self.dataKeys[self.keyIndex]].iloc[0:self.dataLength]), 
                                     len(self.normPressDict[self.dataKeys[self.keyIndex]].iloc[0:self.dataLength]))
@@ -217,14 +304,8 @@ class SignalGraphWindow(QMainWindow):
                 pen = pg.mkPen(color='m', width=3)
                 self.plot = self.graph_widget.plot(self.x, self.y, pen = pen)
 
-        elif (self.normPressDict != None and self.keyIndex < len(self.dataKeys)):
+        elif (self.normPressDict != None and self.keyIndex < len(self.dataKeys) - 1):
             self.keyIndex += 1
-
-            #print(self.keyIndex)
-            #print(len(self.dataKeys))
-            if (self.keyIndex > len(self.dataKeys) - 1):
-                self.keyIndex = len(self.dataKeys) - 1
-
             self.x = np.linspace(0, len(self.normPressDict[self.dataKeys[self.keyIndex]].iloc[0:self.dataLength]), 
                                  len(self.normPressDict[self.dataKeys[self.keyIndex]].iloc[0:self.dataLength]))
             self.y = self.normPressDict[self.dataKeys[self.keyIndex]][self.normPressDict[self.dataKeys[self.keyIndex]].columns[0]].iloc[0:self.dataLength].to_numpy()
@@ -259,12 +340,12 @@ class SignalGraphWindow(QMainWindow):
 
     # Update the graph to previous data
     def update_graph_data_backward(self):
-        if (self.normPressDict != None):
-            self.keyIndex -= 1
+        
+        if (self.keyIndex == None):
+            self.keyIndex = 0
             
-            if (self.keyIndex < 0):
-                self.keyIndex = 0
-                
+        if (self.normPressDict != None and self.keyIndex != 0):
+            self.keyIndex -= 1
             #print(self.dataKeys[self.keyIndex])
             #print(len(self.normPressDict[self.dataKeys[self.keyIndex]]))
             self.x = np.linspace(0, len(self.normPressDict[self.dataKeys[self.keyIndex]].iloc[0:self.dataLength]), len(self.normPressDict[self.dataKeys[self.keyIndex]].iloc[0:self.dataLength]))
@@ -292,12 +373,11 @@ class SignalGraphWindow(QMainWindow):
                     x = ind
                     y = self.y[x]
                     marker = self.graph_widget.plot([x], [y], pen=None, symbol='o', symbolSize=6, symbolBrush= 'cyan')
-                self.to_markers.append(marker)
+                    self.to_markers.append(marker)
 
             
         currentKey = list(self.dataKeys)[self.keyIndex]
         self.setWindowTitle("Manual Selection of Inflection Points " + currentKey + " " + str(self.keyIndex + 1) + "/" + str(len(self.dataKeys)))
-        
         
     # Move to the next dataset to mark.    
     def change_data_to_mark_forward(self):
@@ -330,6 +410,7 @@ class SignalGraphWindow(QMainWindow):
                         minLocation = np.array(minLastClickedPointDist).argmin()
                         #print("hs_Markers")
                         #print(self.hs_markers)
+                        
                         del_marker = self.hs_markers[minLocation]
                         self.graph_widget.removeItem(del_marker)
                         del self.hs_click_locations[minLocation]
@@ -460,6 +541,9 @@ class SignalGraphWindow(QMainWindow):
 
     # Ensure that all data is saved when the graph is closed.
     def closeEvent(self, event):
+        # Stopping timer:
+        self.stop_timer()
+
         self.save_indices()
         if (len(self.savedHSInflPointDict.keys()) == 0 or self.dataKeys[self.keyIndex] not in self.savedHSInflPointDict.keys()):
             self.savedHSInflPointDict[self.dataKeys[self.keyIndex]] = self.hs_click_locations
@@ -478,6 +562,12 @@ class SignalGraphWindow(QMainWindow):
 
         with open(TIP_file_path, 'wb') as f:
             pkl.dump(self.savedTOInflPointDict, f)
+        #print(self.marking_time_path)
+        #print(self.counter)
+        TIP_file_path = f"{self.marking_time_file_name}"
+        np.save(TIP_file_path, np.array([self.counter]))
+        #with open(TIP_file_path, "wb") as f:
+        #    pkl.dump(self.counter, f)
 
         super().closeEvent(event)
 
